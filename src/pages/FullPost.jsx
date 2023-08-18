@@ -3,6 +3,7 @@ import React from "react";
 import { Post } from "../components/Post";
 import { Index } from "../components/AddComment";
 import { CommentsBlock } from "../components/CommentsBlock";
+
 import { useParams } from "react-router-dom";
 import axios from "../axios";
 

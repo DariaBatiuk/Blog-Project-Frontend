@@ -12,6 +12,7 @@ import axios from '../axios';
 import { fetchPosts, fetchTags } from '../redux/slices/posts';
 
 
+
 export const Home = () => {
 	const dispatch = useDispatch();
 	const { posts, tags } = useSelector((state) => state.posts);
