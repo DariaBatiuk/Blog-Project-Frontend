@@ -5,11 +5,12 @@ import Paper from "@mui/material/Paper";
 import Button from "@mui/material/Button";
 import { useForm } from 'react-hook-form';
 import styles from "./Login.module.scss";
-import { useDispatch } from "react-redux";
-import { fetchAuth } from "../../redux/slices/auth";
-import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchAuth, selectIsAuth } from "../../redux/slices/auth";
+import { Navigate } from "react-router-dom";
 
 export const Login = () => {
+	const isAuth = useSelector(selectIsAuth);
 	const dispatch = useDispatch();
 
 	const { register, handleSubmit, setError, formState: { errors, isValid } } = useForm({
@@ -20,8 +21,27 @@ export const Login = () => {
 		mode: 'onChange',
 	});
 
-	const onSubmit = (values) => {
-		dispatch(fetchAuth(values));
+	const onSubmit = async (values) => {
+		const data = await dispatch(fetchAuth(values));
+
+		//keeping token
+		if(!data.payload){
+			return alert('Authorization failed')
+		};
+
+		if('token' in data.payload){
+			window.localStorage.setItem('token', data.payload.token);
+		} else {
+			alert('Authorization failed!')
+		}
+	};
+
+	// React.useEffect();
+
+	console.log('isAuth', isAuth);
+	//redirecting logged in user to the main page
+	if(isAuth) {
+		return <Navigate to="/" />
 	}
   return (
 		<Paper classes={{ root: styles.root }}>
