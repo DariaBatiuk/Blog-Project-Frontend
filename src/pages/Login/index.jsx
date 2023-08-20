@@ -65,7 +65,7 @@ export const Login = () => {
 					{...register('password', { required: 'Please write your password' })}
 					fullWidth
 				/>
-				<Button size="large" variant="contained" fullWidth type="submit">
+				<Button size="large" variant="contained" fullWidth type="submit" disabled={ !isValid }>
 					Log in
 				</Button>
 			</form>
