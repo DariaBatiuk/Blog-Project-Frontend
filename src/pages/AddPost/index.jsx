@@ -7,61 +7,80 @@ import { useSelector } from "react-redux";
 import "easymde/dist/easymde.min.css";
 import styles from "./AddPost.module.scss";
 import { selectIsAuth } from "../../redux/slices/auth";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useNavigate, Navigate, useParams } from "react-router-dom";
 import axios from "../../axios";
 
-
 export const AddPost = () => {
-	const navigate = useNavigate();
+  const { id } = useParams();
+  const navigate = useNavigate();
   const isAuth = useSelector(selectIsAuth);
-	const [isLoading, setLoading] = React.useState(false);
+  const [isLoading, setLoading] = React.useState(false);
   const [text, setText] = React.useState("");
   const [title, setTitle] = React.useState("");
   const [tags, setTags] = React.useState("");
-	const [imageUrl, setImageUrl] = React.useState("");
-	const inputFileRef = React.useRef(null);
+  const [imageUrl, setImageUrl] = React.useState("");
+  const inputFileRef = React.useRef(null);
+  const isEditing = Boolean(id);
 
   const handleChangeFile = async (event) => {
-		try {
-			const formData = new FormData();
-			const file = event.target.files[0];
-			formData.append('image', file);
-			const { data } = await axios.post('/upload', formData);
-			setImageUrl(data.url);
-		} catch (err) {
-			console.warn(err);
-			alert('Dowload failed')
-		}
-	};
+    try {
+      const formData = new FormData();
+      const file = event.target.files[0];
+      formData.append("image", file);
+      const { data } = await axios.post("/upload", formData);
+      setImageUrl(data.url);
+    } catch (err) {
+      console.warn(err);
+      alert("Dowload failed");
+    }
+  };
 
-  const onClickRemoveImage =  () => {
-		setImageUrl('');
-	};
+  const onClickRemoveImage = () => {
+    setImageUrl("");
+  };
 
   const onChange = React.useCallback((value) => {
     setText(value);
   }, []);
 
-	const onSubmit = async ()=>{
-		try {
+  const onSubmit = async () => {
+    try {
+      setLoading(true);
 
-			setLoading(true);
+      const fields = {
+        title,
+        imageUrl,
+        tags,
+        text,
+      };
 
-			const fields = {
-				title, 
-				imageUrl,
-				tags,
-				text
-			}
-			
-			const { data } = await axios.post('/posts', fields);
-			const id = data._id
-			navigate(`/posts/${id}`);
-		} catch (err) {
-			console.warn(err);
-			alert('Post creation failed!')
-		}
-	}
+      const { data } = isEditing
+        ? await axios.patch(`/posts/${id}`, fields)
+        : await axios.post("/posts", fields);
+      const _id = isEditing ? id : data._id
+      navigate(`/posts/${_id}`);
+    } catch (err) {
+      console.warn(err);
+      alert("Post creation failed!");
+    }
+  };
+
+  React.useEffect(() => {
+    if (id) {
+      axios
+        .get(`/posts/${id}`)
+        .then(({ data }) => {
+          setTitle(data.title);
+          setText(data.text);
+          setTags(data.tags.join(","));
+          setImageUrl(data.imageUrl);
+        })
+        .catch((err) => {
+          console.warn(err);
+          alert("Can not get the article!");
+        });
+    }
+  }, []);
 
   const options = React.useMemo(
     () => ({
@@ -82,30 +101,39 @@ export const AddPost = () => {
     return <Navigate to="/" />;
   }
 
-	console.log({ title, tags, text})
+  console.log({ title, tags, text });
 
   return (
     <Paper style={{ padding: 30 }}>
-      <Button onClick={() => inputFileRef.current.click()} variant="outlined" size="large">
+      <Button
+        onClick={() => inputFileRef.current.click()}
+        variant="outlined"
+        size="large"
+      >
         Download preview
       </Button>
-      <input ref={inputFileRef} type="file" onChange={handleChangeFile} 
-			hidden />
+      <input
+        ref={inputFileRef}
+        type="file"
+        onChange={handleChangeFile}
+        hidden
+      />
       {imageUrl && (
-				<>
-				      <Button variant="contained" color="error" onClick={onClickRemoveImage}>
-          Delete
-        </Button>
-				<img 
-				className={styles.image}
-				src={`http://localhost:444${imageUrl}`}
-				alt="Uploaded"
-			/>
-				</>
+        <>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={onClickRemoveImage}
+          >
+            Delete
+          </Button>
+          <img
+            className={styles.image}
+            src={`http://localhost:444${imageUrl}`}
+            alt="Uploaded"
+          />
+        </>
       )}
-      {/* {imageUrl && (
-        
-      )} */}
       <br />
       <br />
       <TextField
@@ -113,15 +141,15 @@ export const AddPost = () => {
         variant="standard"
         placeholder="Name of the post..."
         value={title}
-        onChange={e => setTitle(e.target.value)}
+        onChange={(e) => setTitle(e.target.value)}
         fullWidth
       />
       <TextField
         classes={{ root: styles.tags }}
         variant="standard"
         placeholder="Tags"
-				value = {tags}
-				onChange={e => setTags(e.target.value)}
+        value={tags}
+        onChange={(e) => setTags(e.target.value)}
         fullWidth
       />
       <SimpleMDE
@@ -132,7 +160,7 @@ export const AddPost = () => {
       />
       <div className={styles.buttons}>
         <Button onClick={onSubmit} size="large" variant="contained">
-          Publish
+          {isEditing ? "Save" : "Publish"}
         </Button>
         <a href="/">
           <Button size="large">Cancel</Button>
